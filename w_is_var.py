@@ -1,75 +1,48 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-k = 2; n = 5; m = 1; M = 2; fb = 1; fa = 2; N = 10; omega = np.sqrt(k/m); num = 10000;
-result = np.zeros(num)
-w0 = np.linspace(0,10,num)
+k = 2;  N = 1000; m = 2; M = 10; fb = 5; fa = 2; n = 3; omega = np.sqrt(k/m);
+w0 = np.linspace(0, 4, 10000)
 
-ksi = np.pi / N
-def Ampl(k):
-    ksi = np.pi * k / N
+def get_amplitudes(k_idx):
+    ksi = np.pi * k_idx / N
+    jamma = 0.01;
     phi = ((w0/omega)**2 - 1 + np.exp(1j * ksi)) / ((w0/omega)**2 - 1 + np.exp(-1j * ksi))
 
-    eq_1_part_1 = k*(np.exp(1j*ksi*(n+1)) - phi*np.exp(-1j*ksi)*np.exp(-1j*ksi*(n+1)) + np.exp(1j*ksi*n) - phi*np.exp(-1j*ksi)*np.exp(-1j*ksi*n))
-    eq_1_part_2 = (2*k - M*w0**2)*(np.exp(1j*ksi*n) - phi*np.exp(-1j*ksi*n))
+    eq1 = (2*k - M*w0**2 + 2j*jamma*w0)*(np.exp(1j*ksi*n)+phi*np.exp(-1j*ksi*n))
+    eq2 = k*(np.exp(1j*ksi*(n+1)) + phi*np.exp(-1j*ksi)*np.exp(-1j*ksi*(n+1)) - np.exp(1j*ksi*n) + phi*np.exp(-1j*ksi)*np.exp(-1j*ksi*n))
+    eq3 = (2*k - m*w0**2 + 2j*jamma*w0)*(np.exp(1j*ksi*n)+phi*np.exp(-1j*ksi)*np.exp(-1j*ksi*n))
+    eq4 = k*(np.exp(1j*ksi*n) + phi*np.exp(-1j*ksi*n) + np.exp(1j*ksi*(n-1)) + phi*np.exp(-1j*ksi*(n-1)))
 
-    eq_2_part_1 = k*(np.exp(1j*ksi*n) - phi*np.exp(-1j*ksi*n) + np.exp(1j*ksi*(n-1)) - phi*np.exp(-1j*ksi*(n-1)))
-    eq_2_part_2 = (2*k - m*w0**2)*(np.exp(1j*ksi*n) - phi*np.exp(-1j*ksi)*np.exp(-1j*ksi*n))
+    B_val = (fa/2j + (eq3/eq2)*fb/2j)*(1/((eq1/eq2)*eq3 - eq4))
+    A_val = -fb/(2j) * (1/eq2) + B_val * (eq1/eq2)
+    
+    return B_val, A_val
 
-    B = (fb/(2j) * (eq_2_part_2/eq_1_part_1) - fa/(2j)) * (1/(eq_2_part_1 - eq_2_part_2*(eq_1_part_2/eq_1_part_1)))
-    A = eq_1_part_2/eq_1_part_1 * B + fb/(1j*eq_1_part_1)
-    return B, A , (eq_2_part_1 - eq_2_part_2*(eq_1_part_2/eq_1_part_1))
+# Суммируем все моды для B и A
+sum_B = np.zeros(len(w0), dtype=complex)
+sum_A = np.zeros(len(w0), dtype=complex)
 
-B_1, A_1, C = Ampl(1)
-B_2, A_2, _ = Ampl(2)
-B_3, A_3, _ = Ampl(3)
-B_4, A_4, _ = Ampl(4)
-B_5, A_5, _ = Ampl(5)
-B_6, A_6, _ = Ampl(6)
-B_7, A_7, _ = Ampl(7)
-B_8, A_8, _ = Ampl(8)
-B_9, A_9, _ = Ampl(9)
-B_10, A_10, _ = Ampl(10)
+for ind in range(1, N):
+    B_val, A_val = get_amplitudes(ind)
+    sum_B += B_val
+    sum_A += A_val
 
+# Берем модуль и нормируем
+amplitude_B = np.abs(sum_B)
+amplitude_A = np.abs(sum_A)
 
-# Вычисляем данные
-mod_B = np.abs(B_1)
-mod_B_2 = np.abs(B_2)
-mod_B_3 = np.abs(B_3)
-mod_B_4 = np.abs(B_4)
-mod_B_5 = np.abs(B_5)
-mod_B_6 = np.abs(B_6)
-mod_B_7 = np.abs(B_7)
-mod_B_8 = np.abs(B_8)
-mod_B_9 = np.abs(B_9)
-mod_B_10 = np.abs(B_10)
+amplitude_B_norm = amplitude_B / np.max(amplitude_B)
+amplitude_A_norm = amplitude_A / np.max(amplitude_A)
 
-mod_A = np.abs(A_1)
-mod_A_2 = np.abs(A_2)
-mod_A_3 = np.abs(A_3)
-mod_A_4 = np.abs(A_4)
-
-
-# Находим разумные пределы (отсекаем выбросы)
-percentile = 99  # используем 99-й перцентиль
-ylim1_max = np.percentile(mod_B[mod_B < np.inf], percentile)
-#ylim2_max = np.percentile(mod_B_squared[mod_B_squared < np.inf], percentile)
-
-
-# # Модуль |B|
-# plt.plot(w0, (mod_B + mod_B_2 + mod_B_3 + mod_B_4 + mod_B_5 + mod_B_6 + mod_B_7 + mod_B_8 + mod_B_9)/100, linewidth=2)
-# plt.plot(w0, mod_B_2, linewidth=2)
-
-# plt.plot(w0, mod_A, linewidth=2)
-plt.plot(w0, mod_B_5, linewidth=2)
-
-plt.ylim(0, ylim1_max)  # ← ограничение по Y
-plt.xlabel(r'w', fontsize=12)
-plt.ylabel(r'$|B|$', fontsize=12)
-plt.title('Модуль B', fontsize=14)
+# Строим оба графика вместе
+plt.figure(figsize=(12, 6))
+plt.plot(w0, amplitude_B_norm, 'b-', linewidth=2, label='Суммарная B (нормирована)')
+plt.plot(w0, amplitude_A_norm, 'r-', linewidth=2, label='Суммарная A (нормирована)')
+plt.xlabel(r'$\omega_0$', fontsize=12)
+plt.ylabel(r'Нормированная амплитуда', fontsize=12)
+plt.title(f'Суммарные амплитуды B и A (N={N} мод)', fontsize=14)
+plt.legend()
 plt.grid(True, alpha=0.3)
-
-
-
 plt.tight_layout()
 plt.show()
