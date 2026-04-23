@@ -1,21 +1,24 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-k = 2;  N = 10000; m = 1; M = 10; fb = 10; fa = 2; n = N/2; omega = np.sqrt(k/m);
-w0 = np.linspace(0.001, 3, 100000)
+k = 2;  N = 4; m = 1; M = 5; fb = 1; fa = 2; n = 4; omega = np.sqrt(k/m);
+w0 = np.linspace(0.001, 3, 10000)
 
 def get_amplitudes(k_idx, w0):
     ksi = np.pi * k_idx / N
-    jamma = 0.0001;
-    phi = ((w0/omega)**2 - 1 + np.exp(-1j * ksi)) / ((w0/omega)**2 - 1 + np.exp(1j * ksi))
+    jamma = 0.01;
 
-    eq1 = (2*k - M*w0**2 + 2j*jamma*w0)*(np.exp(1j*ksi*n)-phi*np.exp(-1j*ksi*n))
-    eq2 = k*(np.exp(1j*ksi*(n+1)) - phi*np.exp(1j*ksi)*np.exp(-1j*ksi*(n+1)) + np.exp(1j*ksi*n) -  phi*np.exp(1j*ksi)*np.exp(-1j*ksi*n))
-    eq3 = (2*k - m*w0**2 + 2j*jamma*w0)*(np.exp(1j*ksi*n)-phi*np.exp(1j*ksi)*np.exp(-1j*ksi*n))
-    eq4 = k*(np.exp(1j*ksi*n) - phi*np.exp(-1j*ksi*n) + np.exp(1j*ksi*(n-1)) - phi*np.exp(-1j*ksi*(n-1)))
+    eq1 = 2*k - m*w0**2 - 2j*jamma*w0
+    eq2 = 2*k - M*w0**2 - 2j*jamma*w0
 
-    B_val = (fb/2j + (eq2/eq3)*fa/2j)/(eq1 - (eq4/eq3)*eq2)
-    A_val = (B_val * eq1 - fb/2j)/eq2
+    fa1 = fa/(2j*eq1); fb1 = fb/(2j* eq2)
+
+    eq3 = k*(np.sin(ksi*n) + np.sin(ksi*(n-1)))/eq1
+
+    eq4 = k*(np.sin(ksi*(n+1)) + np.sin(ksi*(n)))/eq2
+
+    A_val = (fa1 + fb1*eq3)/(1-eq3*eq4)
+    B_val = fb1 + A_val*eq4
     
     return B_val, A_val
 

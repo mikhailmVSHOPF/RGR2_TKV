@@ -1,7 +1,7 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-k = 1; n = 2; m = 1; M = 2; fb = 1; fa = 2; N = 10; omega = np.sqrt(k/m); w0 = 1;
+k = 1; n = 1000; m = 1; M = 2; fb = 1; fa = 2; N = 10; omega = np.sqrt(k/m); w0 = 1;
 
 q = np.linspace(0,100,100000)
 ksi = np.pi * np.array(q) / N
